@@ -1,0 +1,29 @@
+apply plugin: 'groovy'
+
+group = 'com.github.akiellor.jenkins.dsl'
+version = '0.0.1-SNAPSHOT'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        flatDir(name: 'local', dirs: "${project.rootDir}/../lib")
+        flatDir(name: 'dist', dirs: "${project.rootDir}/../build/dist")
+    }
+}
+
+repositories {
+    mavenCentral()
+    flatDir(name: 'local', dirs: "${project.rootDir}/../lib")
+    flatDir(name: 'dist', dirs: "${project.rootDir}/../build/dist")
+}
+
+dependencies {
+    compile gradleApi()
+    groovy group: 'org.codehaus.groovy', name: 'groovy', version: '1.7.10'
+}
+
+uploadArchives {
+    repositories {
+        add project.repositories.dist
+    }
+}

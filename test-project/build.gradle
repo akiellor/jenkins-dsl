@@ -1,0 +1,84 @@
+apply plugin: 'jenkins'
+
+buildscript {
+    repositories {
+        flatDir(name: 'local', dirs: "${project.rootDir}/../lib")
+        flatDir(name: 'dist', dirs: "${project.rootDir}/../build/dist")
+    }
+
+    dependencies {
+        classpath 'com.github.akiellor.jenkins.dsl:plugin:0.0.1-SNAPSHOT'
+    }
+}
+
+jenkins {
+    server('http://localhost:8080')
+
+    jobs {
+        job('first', {
+            workspace('$JENKINS_HOME/pipelines/$BUILD_NUMBER/first')
+
+            sh('env | sort')
+
+            sh('touch first')
+
+            artifacts('first')
+
+            parameterisedTrigger('acceptance', 'PIPELINE_ID=$BUILD_NUMBER')
+
+            raw {
+                buildWrappers {
+                    'org.jenkinsci.plugins.buildnamesetter.BuildNameSetter' {
+                        template('PIPELINE#${BUILD_NUMBER}/first')
+                    }
+                }
+            }
+        })
+
+        job('acceptance', {
+            parameter('PIPELINE_ID')
+
+            workspace('$JENKINS_HOME/pipelines/$PIPELINE_ID/acceptance')
+
+            sh('cp -R $JENKINS_HOME/pipelines/$PIPELINE_ID/first/* $JENKINS_HOME/pipelines/$PIPELINE_ID/acceptance')
+
+            sh('env | sort')
+
+            sh('touch acceptance')
+
+            artifacts('acceptance,first')
+
+            parameterisedTrigger('publish', 'PIPELINE_ID=$PIPELINE_ID')
+
+            raw {
+                buildWrappers {
+                    'org.jenkinsci.plugins.buildnamesetter.BuildNameSetter' {
+                        template('PIPELINE#${ENV,var="PIPELINE_ID"}/acceptance')
+                    }
+                }
+            }
+        })
+
+        job('publish', {
+            parameter('PIPELINE_ID')
+
+            workspace('$JENKINS_HOME/pipelines/$PIPELINE_ID/publish')
+
+            sh('cp -R $JENKINS_HOME/pipelines/$PIPELINE_ID/acceptance/* $JENKINS_HOME/pipelines/$PIPELINE_ID/publish')
+
+            sh('env | sort')
+
+            sh('touch publish')
+
+            artifacts('acceptance,first,publish')
+
+            raw {
+                buildWrappers {
+                    'org.jenkinsci.plugins.buildnamesetter.BuildNameSetter' {
+                        template('PIPELINE#${ENV,var="PIPELINE_ID"}/publish')
+                    }
+                }
+            }
+        })
+    }
+}
