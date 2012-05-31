@@ -1,0 +1,5 @@
+From the root project:
+
+$ gradle --build-file plugin/build.gradle uploadArchives #this will just publish to a local directory for the test project to consume
+
+$ gradle --build-file test-project/build.gradle jobs #prints out an xml representation of the job configurations
